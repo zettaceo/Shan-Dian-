@@ -12,7 +12,7 @@ create table if not exists public.products (
   name          text not null,
   description   text,
   sale_price    numeric(12, 2) not null default 0,
-  cost_price    numeric(12, 2) not null default 0,
+  price_puxador numeric(12, 2) not null default 0,
   stock         integer not null default 0,
   owner_id      uuid not null default auth.uid() references auth.users (id) on delete cascade,
   created_at    timestamptz not null default now(),
@@ -78,6 +78,54 @@ drop policy if exists "products_delete_all" on public.products;
 create policy "products_delete_all"
   on public.products for delete to authenticated
   using (true);
+
+-- ----------------------------------------------------------------------------
+-- 4. Registro de consultas (scan_events) para o ranking de mais escaneados
+-- ----------------------------------------------------------------------------
+create table if not exists public.scan_events (
+  id          uuid primary key default gen_random_uuid(),
+  product_id  uuid references public.products (id) on delete set null,
+  barcode     text not null,
+  scanned_by  uuid default auth.uid() references auth.users (id) on delete set null,
+  scanned_at  timestamptz not null default now()
+);
+
+create index if not exists scan_events_scanned_at_idx on public.scan_events (scanned_at desc);
+create index if not exists scan_events_product_idx on public.scan_events (product_id);
+
+alter table public.scan_events enable row level security;
+
+drop policy if exists "scan_events_select_all" on public.scan_events;
+create policy "scan_events_select_all" on public.scan_events
+  for select to authenticated using (true);
+
+drop policy if exists "scan_events_insert_all" on public.scan_events;
+create policy "scan_events_insert_all" on public.scan_events
+  for insert to authenticated with check (true);
+
+-- ----------------------------------------------------------------------------
+-- 5. Ranking dos produtos mais escaneados a partir de uma data (dia/semana/mes)
+--    Uso no app: supabase.rpc('top_scanned', { since: <ISO date> })
+-- ----------------------------------------------------------------------------
+create or replace function public.top_scanned(since timestamptz)
+returns table (product_id uuid, barcode text, name text, scans bigint)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select
+    se.product_id,
+    se.barcode,
+    coalesce(p.name, se.barcode) as name,
+    count(*) as scans
+  from public.scan_events se
+  left join public.products p on p.id = se.product_id
+  where se.scanned_at >= since
+  group by se.product_id, se.barcode, p.name
+  order by count(*) desc
+  limit 10;
+$$;
 
 -- ============================================================================
 --  Fim do script. Os funcionarios sao criados pela tela de login do app
