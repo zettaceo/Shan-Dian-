@@ -31,9 +31,17 @@ export type Product = {
   name: string;
   description: string | null;
   sale_price: number;
-  cost_price: number;
+  price_puxador: number;
   stock: number;
   owner_id: string;
   created_at: string;
   updated_at: string;
+};
+
+/** Linha do ranking de produtos mais escaneados (RPC public.top_scanned). */
+export type TopScanned = {
+  product_id: string | null;
+  barcode: string;
+  name: string;
+  scans: number;
 };

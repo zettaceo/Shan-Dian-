@@ -40,7 +40,7 @@ export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [salePrice, setSalePrice] = useState("");
-  const [costPrice, setCostPrice] = useState("");
+  const [pricePuxador, setPricePuxador] = useState("");
   const [stock, setStock] = useState("");
 
   const [status, setStatus] = useState<"idle" | "saving" | "ok" | "error">(
@@ -65,7 +65,7 @@ export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
       name: name.trim(),
       description: description.trim() || null,
       sale_price: Number(salePrice) || 0,
-      cost_price: Number(costPrice) || 0,
+      price_puxador: Number(pricePuxador) || 0,
       stock: Number(stock) || 0,
       owner_id: user?.id,
     });
@@ -83,7 +83,7 @@ export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
     setName("");
     setDescription("");
     setSalePrice("");
-    setCostPrice("");
+    setPricePuxador("");
     setStock("");
     onSaved();
 
@@ -127,7 +127,7 @@ export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
             <PriceInput value={salePrice} onChange={setSalePrice} tKey="misc.currency" tFn={t} />
           </Field>
           <Field label={t("form.cost_price")}>
-            <PriceInput value={costPrice} onChange={setCostPrice} tKey="misc.currency" tFn={t} />
+            <PriceInput value={pricePuxador} onChange={setPricePuxador} tKey="misc.currency" tFn={t} />
           </Field>
         </div>
 
