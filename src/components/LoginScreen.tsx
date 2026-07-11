@@ -11,7 +11,7 @@ export function LoginScreen() {
   const { signIn, signUp } = useAuth();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function LoginScreen() {
     setBusy(true);
 
     const fn = mode === "signin" ? signIn : signUp;
-    const { error } = await fn(email.trim(), password);
+    const { error } = await fn(username.trim(), password);
 
     setBusy(false);
     if (error) {
@@ -62,12 +62,14 @@ export function LoginScreen() {
               {t("auth.email")}
             </span>
             <input
-              type="email"
+              type="text"
               required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="loja@exemplo.com"
+              autoCapitalize="none"
+              autoCorrect="off"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={t("auth.username_placeholder")}
               className={inputClass}
             />
           </label>

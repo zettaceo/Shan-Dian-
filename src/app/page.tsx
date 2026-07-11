@@ -6,7 +6,7 @@ import { LoginScreen } from "@/components/LoginScreen";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { ProductForm } from "@/components/ProductForm";
 import { Dashboard } from "@/components/Dashboard";
-import { useAuth } from "@/lib/auth";
+import { useAuth, emailToUsername } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
 export default function Home() {
@@ -41,7 +41,7 @@ export default function Home() {
           <Dashboard refreshKey={refreshKey} />
 
           <footer className="pb-8 pt-2 text-center font-mono text-[10px] uppercase tracking-widest text-muted-2">
-            {t("app.name")} · {t("header.online")} ● {user.email}
+            {t("app.name")} · {t("header.online")} ● {emailToUsername(user.email)}
           </footer>
         </main>
       )}

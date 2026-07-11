@@ -11,12 +11,34 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
 
+// O Supabase Auth exige um e-mail. Como o login e por NOME DE USUARIO,
+// convertemos o usuario em um e-mail sintetico interno (nunca exibido).
+const USERNAME_DOMAIN = "shandian.local";
+
+/** "João Silva" -> "joao_silva@shandian.local" (deterministico). */
+export function usernameToEmail(username: string) {
+  const clean = username
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // remove acentos
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "");
+  return `${clean}@${USERNAME_DOMAIN}`;
+}
+
+/** Extrai o usuario de volta a partir do e-mail sintetico, para exibicao. */
+export function emailToUsername(email: string | null | undefined) {
+  if (!email) return "";
+  return email.replace(new RegExp(`@${USERNAME_DOMAIN}$`), "");
+}
+
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (username: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (username: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -46,15 +68,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       loading,
-      signIn: async (email, password) => {
+      signIn: async (username, password) => {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: usernameToEmail(username),
           password,
         });
         return { error: error?.message ?? null };
       },
-      signUp: async (email, password) => {
-        const { error } = await supabase.auth.signUp({ email, password });
+      signUp: async (username, password) => {
+        const { error } = await supabase.auth.signUp({
+          email: usernameToEmail(username),
+          password,
+        });
         return { error: error?.message ?? null };
       },
       signOut: async () => {
