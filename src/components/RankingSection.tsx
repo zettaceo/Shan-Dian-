@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "./Card";
 import { useI18n } from "@/lib/i18n";
 import { supabase, type TopScanned } from "@/lib/supabaseClient";
-import { categorize, categoryLabel, CATEGORY_META } from "@/lib/categories";
+import { categorize, categoryLabel, CATEGORY_META, type CategoryKey } from "@/lib/categories";
+import { CategoryDonut, type DonutSlice } from "./CategoryDonut";
 
 type Period = "day" | "week" | "month";
 
@@ -42,16 +43,16 @@ export function RankingSection() {
 
   const max = rows.length ? Math.max(...rows.map((r) => r.scans)) : 0;
 
-  // Categoria mais consultada (soma de scans por categoria)
-  const topCategory = useMemo(() => {
-    if (!rows.length) return null;
-    const acc = new Map<string, number>();
+  // Distribuicao de consultas por categoria (para o grafico de rosca + KPI)
+  const { slices, topCategory } = useMemo(() => {
+    const acc = new Map<CategoryKey, number>();
     for (const r of rows) {
       const key = categorize(r.name);
       acc.set(key, (acc.get(key) ?? 0) + r.scans);
     }
+    const sl: DonutSlice[] = [...acc.entries()].map(([key, value]) => ({ key, value }));
     const best = [...acc.entries()].sort((a, b) => b[1] - a[1])[0];
-    return best ? (best[0] as keyof typeof CATEGORY_META) : null;
+    return { slices: sl, topCategory: best ? best[0] : null };
   }, [rows]);
 
   return (
@@ -95,6 +96,12 @@ export function RankingSection() {
         ) : rows.length === 0 ? (
           <p className="font-mono text-xs text-muted">{t("rank.empty")}</p>
         ) : (
+          <>
+            {/* Grafico de rosca por categoria */}
+            <div className="mb-5 rounded-md border border-line-soft bg-panel-2/40 p-4">
+              <CategoryDonut slices={slices} unit={t("rank.scans")} />
+            </div>
+
           <ol className="space-y-3 font-mono text-sm">
             {rows.map((r, i) => {
               const cat = categorize(r.name);
@@ -133,6 +140,7 @@ export function RankingSection() {
               );
             })}
           </ol>
+          </>
         )}
       </Card>
     </div>
