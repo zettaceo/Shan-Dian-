@@ -3,16 +3,6 @@
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 
-/** Marca do Shan Dian (闪店) — bode neon com circuitos. */
-function BoltLogo() {
-  return (
-    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-line bg-black shadow-neon">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/mark.png" alt="Shan Dian" className="h-full w-full object-cover" />
-    </div>
-  );
-}
-
 export function Header() {
   const { lang, setLang, t } = useI18n();
   const { user, signOut } = useAuth();
@@ -20,17 +10,14 @@ export function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-base/85 backdrop-blur">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
-        {/* Marca */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <BoltLogo />
-          <div className="min-w-0">
-            <div className="truncate font-mono text-base font-bold tracking-[0.25em] text-gray-100">
-              {t("app.name")}
-            </div>
-            <div className="truncate font-mono text-[10px] uppercase tracking-widest text-muted">
-              {t("app.tagline")}
-            </div>
-          </div>
+        {/* Marca — logo completo (bode neon + SHAN DIAN 闪店) */}
+        <div className="flex min-w-0 items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="Shan Dian 闪店"
+            className="h-11 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.2)]"
+          />
         </div>
 
         {/* Controles */}
