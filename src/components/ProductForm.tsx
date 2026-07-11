@@ -5,6 +5,7 @@ import { Card } from "./Card";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/auth";
+import { categorize, categoryLabel, CATEGORY_META } from "@/lib/categories";
 
 type Props = {
   /** Codigo vindo do scanner (controla o campo "barcode"). */
@@ -34,7 +35,7 @@ const inputClass =
   "w-full rounded-md border border-line bg-panel-2 px-3 py-2.5 font-mono text-sm text-gray-100 outline-none transition-colors placeholder:text-muted-2 focus:border-neon/50 focus:ring-1 focus:ring-neon/30";
 
 export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { user } = useAuth();
 
   const [name, setName] = useState("");
@@ -110,6 +111,15 @@ export function ProductForm({ barcode, onBarcodeChange, onSaved }: Props) {
             placeholder={t("form.placeholder.name")}
             className={inputClass}
           />
+          {name.trim() ? (
+            <div className="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] text-muted">
+              <span className="uppercase tracking-wider">{t("form.category_detected")}:</span>
+              <span className="inline-flex items-center gap-1 rounded border border-gold/40 bg-gold/5 px-1.5 py-0.5 text-gold">
+                {CATEGORY_META[categorize(name, description)].emoji}{" "}
+                {categoryLabel(categorize(name, description), lang)}
+              </span>
+            </div>
+          ) : null}
         </Field>
 
         <Field label={t("form.description")}>

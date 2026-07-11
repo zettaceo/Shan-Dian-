@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "./Card";
 import { useI18n } from "@/lib/i18n";
 import { supabase, type TopScanned } from "@/lib/supabaseClient";
+import { categorize, categoryLabel, CATEGORY_META } from "@/lib/categories";
 
 type Period = "day" | "week" | "month";
 
@@ -14,16 +15,24 @@ const PERIOD_MS: Record<Period, number> = {
 };
 
 export function RankingSection() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [period, setPeriod] = useState<Period>("day");
   const [rows, setRows] = useState<TopScanned[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
-    const { data } = await supabase.rpc("top_scanned", { since });
-    setRows((data as TopScanned[]) ?? []);
+    const [top, count] = await Promise.all([
+      supabase.rpc("top_scanned", { since }),
+      supabase
+        .from("scan_events")
+        .select("id", { count: "exact", head: true })
+        .gte("scanned_at", since),
+    ]);
+    setRows((top.data as TopScanned[]) ?? []);
+    setTotal(count.count ?? 0);
     setLoading(false);
   }, [period]);
 
@@ -33,60 +42,122 @@ export function RankingSection() {
 
   const max = rows.length ? Math.max(...rows.map((r) => r.scans)) : 0;
 
+  // Categoria mais consultada (soma de scans por categoria)
+  const topCategory = useMemo(() => {
+    if (!rows.length) return null;
+    const acc = new Map<string, number>();
+    for (const r of rows) {
+      const key = categorize(r.name);
+      acc.set(key, (acc.get(key) ?? 0) + r.scans);
+    }
+    const best = [...acc.entries()].sort((a, b) => b[1] - a[1])[0];
+    return best ? (best[0] as keyof typeof CATEGORY_META) : null;
+  }, [rows]);
+
   return (
-    <Card title={t("rank.title")} badge={t("rank.badge")} icon={<ChartIcon />}>
-      {/* Toggle de periodo */}
-      <div className="mb-4 flex overflow-hidden rounded-md border border-line font-mono text-xs">
-        {(["day", "week", "month"] as Period[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={`flex-1 px-3 py-2 uppercase tracking-widest transition-colors ${
-              period === p
-                ? "bg-gold text-black font-bold"
-                : "bg-panel-2 text-muted hover:text-gray-200"
-            }`}
-          >
-            {t(`rank.${p}` as "rank.day")}
-          </button>
-        ))}
+    <div className="space-y-4">
+      {/* KPIs */}
+      <div className="grid grid-cols-3 gap-3">
+        <Kpi label={t("rank.total_scans")} value={String(total)} accent="neon" />
+        <Kpi label={t("rank.unique")} value={String(rows.length)} accent="cyan" />
+        <Kpi
+          label={t("rank.top_category")}
+          value={
+            topCategory
+              ? `${CATEGORY_META[topCategory].emoji} ${categoryLabel(topCategory, lang)}`
+              : "—"
+          }
+          accent="gold"
+          small
+        />
       </div>
 
-      {loading ? (
-        <p className="font-mono text-xs text-muted cursor-blink">{t("rank.loading")}</p>
-      ) : rows.length === 0 ? (
-        <p className="font-mono text-xs text-muted">{t("rank.empty")}</p>
-      ) : (
-        <ol className="space-y-2.5 font-mono text-sm">
-          {rows.map((r, i) => (
-            <li key={`${r.product_id ?? r.barcode}-${i}`} className="flex items-center gap-3">
-              <span
-                className={`w-5 shrink-0 text-right text-xs font-bold ${
-                  i === 0 ? "text-gold" : "text-muted-2"
-                }`}
-              >
-                {i + 1}
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-baseline justify-between gap-2">
-                  <span className="truncate text-gray-100">{r.name}</span>
-                  <span className="shrink-0 text-xs text-neon">
-                    {r.scans} <span className="text-muted">{t("rank.scans")}</span>
-                  </span>
-                </div>
-                {/* Barra proporcional */}
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-panel-2">
-                  <div
-                    className="h-full rounded-full bg-neon/70"
-                    style={{ width: `${max ? (r.scans / max) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
-            </li>
+      <Card title={t("rank.title")} badge={t("rank.badge")} icon={<ChartIcon />}>
+        {/* Toggle de periodo */}
+        <div className="mb-4 flex overflow-hidden rounded-md border border-line font-mono text-xs">
+          {(["day", "week", "month"] as Period[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`flex-1 px-3 py-2 uppercase tracking-widest transition-colors ${
+                period === p
+                  ? "bg-gold text-black font-bold"
+                  : "bg-panel-2 text-muted hover:text-gray-200"
+              }`}
+            >
+              {t(`rank.${p}` as "rank.day")}
+            </button>
           ))}
-        </ol>
-      )}
-    </Card>
+        </div>
+
+        {loading ? (
+          <p className="font-mono text-xs text-muted cursor-blink">{t("rank.loading")}</p>
+        ) : rows.length === 0 ? (
+          <p className="font-mono text-xs text-muted">{t("rank.empty")}</p>
+        ) : (
+          <ol className="space-y-3 font-mono text-sm">
+            {rows.map((r, i) => {
+              const cat = categorize(r.name);
+              return (
+                <li key={`${r.product_id ?? r.barcode}-${i}`} className="flex items-center gap-3">
+                  {/* Posicao */}
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${
+                      i === 0
+                        ? "border-gold/60 bg-gold/10 text-gold"
+                        : "border-line text-muted-2"
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-baseline justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="shrink-0">{CATEGORY_META[cat].emoji}</span>
+                        <span className="truncate text-gray-100">{r.name}</span>
+                      </span>
+                      <span className="shrink-0 text-xs text-neon">
+                        {r.scans} <span className="text-muted">{t("rank.scans")}</span>
+                      </span>
+                    </div>
+                    {/* Barra proporcional com gradiente */}
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-panel-2">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-neon-dim to-neon"
+                        style={{ width: `${max ? (r.scans / max) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  accent,
+  small,
+}: {
+  label: string;
+  value: string;
+  accent: "neon" | "gold" | "cyan";
+  small?: boolean;
+}) {
+  const color = accent === "neon" ? "text-neon" : accent === "gold" ? "text-gold" : "text-cyan";
+  return (
+    <div className="rounded-lg border border-line bg-panel/80 px-2 py-3 text-center">
+      <div className="mb-1 font-mono text-[9px] uppercase tracking-wider text-muted">{label}</div>
+      <div className={`font-mono font-bold ${color} ${small ? "text-[11px] leading-tight" : "text-lg"}`}>
+        {value}
+      </div>
+    </div>
   );
 }
 

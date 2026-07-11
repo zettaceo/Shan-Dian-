@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { FlagBR, FlagCN } from "./Flags";
 
 export function Header() {
   const { lang, setLang, t } = useI18n();
@@ -16,34 +17,36 @@ export function Header() {
           <img
             src="/logo.png"
             alt="Shan Dian 闪店"
-            className="h-11 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.2)]"
+            className="h-12 w-auto object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.2)]"
           />
         </div>
 
         {/* Controles */}
         <div className="flex items-center gap-2">
-          {/* Toggle de idioma PT / 中文 */}
+          {/* Toggle de idioma com bandeiras */}
           <div className="flex overflow-hidden rounded-md border border-line font-mono text-xs">
             <button
               onClick={() => setLang("pt")}
-              className={`px-2.5 py-1.5 transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${
                 lang === "pt"
                   ? "bg-neon text-black font-bold"
                   : "bg-panel-2 text-muted hover:text-gray-200"
               }`}
               aria-pressed={lang === "pt"}
             >
+              <FlagBR className="h-3.5 w-5 rounded-[2px]" />
               PT
             </button>
             <button
               onClick={() => setLang("zh")}
-              className={`px-2.5 py-1.5 transition-colors ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 transition-colors ${
                 lang === "zh"
                   ? "bg-neon text-black font-bold"
                   : "bg-panel-2 text-muted hover:text-gray-200"
               }`}
               aria-pressed={lang === "zh"}
             >
+              <FlagCN className="h-3.5 w-5 rounded-[2px]" />
               中文
             </button>
           </div>

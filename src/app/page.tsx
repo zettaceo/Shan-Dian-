@@ -8,10 +8,11 @@ import { ProductForm } from "@/components/ProductForm";
 import { Dashboard } from "@/components/Dashboard";
 import { ConsultaSection } from "@/components/ConsultaSection";
 import { RankingSection } from "@/components/RankingSection";
+import { ProductsManager } from "@/components/ProductsManager";
 import { useAuth, emailToUsername } from "@/lib/auth";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
 
-type Tab = "register" | "lookup" | "ranking";
+type Tab = "register" | "products" | "lookup" | "ranking";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -25,6 +26,7 @@ export default function Home() {
 
   const tabs: { id: Tab; label: TranslationKey }[] = [
     { id: "register", label: "tab.register" },
+    { id: "products", label: "tab.products" },
     { id: "lookup", label: "tab.lookup" },
     { id: "ranking", label: "tab.ranking" },
   ];
@@ -44,12 +46,12 @@ export default function Home() {
       ) : (
         <main className="mx-auto max-w-2xl px-4 py-5">
           {/* Navegacao por abas */}
-          <nav className="mb-4 flex overflow-hidden rounded-lg border border-line font-mono text-xs">
+          <nav className="mb-4 flex overflow-hidden rounded-lg border border-line font-mono text-[11px]">
             {tabs.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setTab(item.id)}
-                className={`flex-1 px-3 py-2.5 uppercase tracking-widest transition-colors ${
+                className={`flex-1 px-1 py-2.5 uppercase tracking-wider transition-colors ${
                   tab === item.id
                     ? "bg-neon text-black font-bold"
                     : "bg-panel-2 text-muted hover:text-gray-200"
@@ -71,6 +73,8 @@ export default function Home() {
               <Dashboard refreshKey={refreshKey} />
             </div>
           ) : null}
+
+          {tab === "products" ? <ProductsManager /> : null}
 
           {tab === "lookup" ? <ConsultaSection /> : null}
 
