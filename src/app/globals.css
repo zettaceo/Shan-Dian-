@@ -59,13 +59,29 @@ input[type="number"] {
   animation: blink 1s step-end infinite;
 }
 
-/* Container do scanner html5-qrcode: remove bordas feias padrao */
-#reader,
+/* Container do scanner html5-qrcode: video preenche e fica centralizado */
+#reader {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+}
 #reader video {
-  border-radius: 8px !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 #reader__scan_region {
   background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100% !important;
+}
+/* Esconde o placeholder/imagem padrao que desloca o layout antes do video */
+#reader__scan_region > img {
+  display: none !important;
 }
 #reader__dashboard_section_csr button {
   background: #22c55e !important;

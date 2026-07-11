@@ -50,8 +50,12 @@ export function BarcodeScanner({ onDetected }: Props) {
           { facingMode: "environment" },
           {
             fps: 10,
-            qrbox: { width: 260, height: 150 },
-            aspectRatio: 1.6,
+            // Mira responsiva e sempre centralizada no vídeo.
+            qrbox: (viewWidth: number, viewHeight: number) => {
+              const base = Math.min(viewWidth, viewHeight);
+              const width = Math.floor(base * 0.8);
+              return { width, height: Math.floor(width * 0.6) };
+            },
           },
           (decodedText) => {
             setLastCode(decodedText);
@@ -105,14 +109,12 @@ export function BarcodeScanner({ onDetected }: Props) {
         {t("scanner.hint")}
       </p>
 
-      {/* Area de video (so ocupa espaco quando ativo) */}
-      <div
-        className={`overflow-hidden rounded-md border border-line bg-black transition-all ${
-          active ? "mb-3 max-h-[320px]" : "max-h-0 border-transparent"
-        }`}
-      >
-        <div id={REGION_ID} className="w-full" />
-      </div>
+      {/* Area de video: proporcao fixa (retrato) para a mira ficar centralizada */}
+      {active ? (
+        <div className="relative mb-3 aspect-[3/4] w-full overflow-hidden rounded-md border border-line bg-black">
+          <div id={REGION_ID} className="absolute inset-0" />
+        </div>
+      ) : null}
 
       {lastCode && !active ? (
         <div className="mb-3 flex items-center gap-2 rounded-md border border-neon/30 bg-neon/5 px-3 py-2">
