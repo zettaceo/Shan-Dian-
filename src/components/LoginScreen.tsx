@@ -42,6 +42,16 @@ export function LoginScreen() {
 
   return (
     <div className="mx-auto flex min-h-[70dvh] max-w-md flex-col justify-center px-4">
+      {/* Logo completo */}
+      <div className="mb-5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Shan Dian · 闪店"
+          className="mx-auto w-full max-w-sm drop-shadow-[0_0_25px_rgba(34,197,94,0.25)]"
+        />
+      </div>
+
       {!isSupabaseConfigured ? (
         <div className="mb-4 rounded-md border border-gold/40 bg-gold/5 px-4 py-3 font-mono text-xs text-gold">
           <div className="mb-1 font-bold uppercase tracking-wider">
