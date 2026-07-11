@@ -19,13 +19,13 @@ create table if not exists public.products (
   updated_at    timestamptz not null default now()
 );
 
--- Cada dono (loja) so pode ter um codigo de barras cadastrado uma vez.
-create unique index if not exists products_owner_barcode_key
-  on public.products (owner_id, barcode);
+-- Estoque compartilhado: o codigo de barras e unico na LOJA inteira.
+create unique index if not exists products_barcode_key
+  on public.products (barcode);
 
--- Consulta rapida dos ultimos cadastros por dono.
-create index if not exists products_owner_created_idx
-  on public.products (owner_id, created_at desc);
+-- Consulta rapida dos ultimos cadastros (dashboard).
+create index if not exists products_created_idx
+  on public.products (created_at desc);
 
 -- ----------------------------------------------------------------------------
 -- 2. Gatilho para manter "updated_at" sempre atualizado
@@ -33,6 +33,7 @@ create index if not exists products_owner_created_idx
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -48,40 +49,38 @@ create trigger trg_products_updated_at
 
 -- ----------------------------------------------------------------------------
 -- 3. Row Level Security (RLS)
---    Cada usuario autenticado enxerga e altera apenas os seus proprios produtos.
+--    ESTOQUE COMPARTILHADO: qualquer usuario autenticado (dona ou funcionario)
+--    enxerga e altera TODOS os produtos. O owner_id fica apenas como registro
+--    de quem cadastrou cada item (auditoria).
 -- ----------------------------------------------------------------------------
 alter table public.products enable row level security;
 
 drop policy if exists "products_select_own" on public.products;
-create policy "products_select_own"
-  on public.products
-  for select
-  to authenticated
-  using (owner_id = auth.uid());
+drop policy if exists "products_select_all" on public.products;
+create policy "products_select_all"
+  on public.products for select to authenticated
+  using (true);
 
 drop policy if exists "products_insert_own" on public.products;
-create policy "products_insert_own"
-  on public.products
-  for insert
-  to authenticated
-  with check (owner_id = auth.uid());
+drop policy if exists "products_insert_all" on public.products;
+create policy "products_insert_all"
+  on public.products for insert to authenticated
+  with check (true);
 
 drop policy if exists "products_update_own" on public.products;
-create policy "products_update_own"
-  on public.products
-  for update
-  to authenticated
-  using (owner_id = auth.uid())
-  with check (owner_id = auth.uid());
+drop policy if exists "products_update_all" on public.products;
+create policy "products_update_all"
+  on public.products for update to authenticated
+  using (true) with check (true);
 
 drop policy if exists "products_delete_own" on public.products;
-create policy "products_delete_own"
-  on public.products
-  for delete
-  to authenticated
-  using (owner_id = auth.uid());
+drop policy if exists "products_delete_all" on public.products;
+create policy "products_delete_all"
+  on public.products for delete to authenticated
+  using (true);
 
 -- ============================================================================
---  Fim do script. Cadastre a dona da loja em Authentication > Users
---  (ou deixe-a se registrar pela tela de login do proprio app).
+--  Fim do script. Os funcionarios sao criados pela tela de login do app
+--  (login por USUARIO + senha; o app converte o usuario em um e-mail interno).
+--  IMPORTANTE: em Authentication > Providers > Email, desative "Confirm email".
 -- ============================================================================

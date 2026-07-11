@@ -82,12 +82,21 @@ npm run dev                          # http://localhost:3000
 4. Clique em **Deploy**. Em ~1 min o app estará no ar em `https://SEU-APP.vercel.app`.
 5. Cada `git push` para a branch conectada **redeploya automaticamente** (CI/CD).
 
+> **Antes do primeiro acesso**, no Supabase vá em **Authentication → Providers →
+> Email** e **desative "Confirm email"**. O login é por **usuário + senha** (o app
+> converte o usuário em um e-mail interno `usuario@shandian.local`), então não há
+> caixa de entrada para confirmar.
+
 ### 5) Primeiro acesso
 
 1. Abra a URL da Vercel no celular.
-2. Na tela de login clique em **Criar conta**, informe e-mail e senha.
+2. Na tela de login clique em **Cadastrar funcionário**, informe **usuário** e senha.
 3. Faça login → escaneie um código de barras → preencha os campos → **Salvar**.
 4. O produto aparece na lista **"Últimos cadastros"** (estilo log de terminal).
+
+> **Estoque compartilhado:** todos os usuários (dona e funcionários) enxergam e
+> editam o **mesmo estoque**. Para cadastrar um funcionário, basta usar
+> "Cadastrar funcionário" e criar um usuário + senha para ele.
 
 ---
 
@@ -100,9 +109,11 @@ inclua a mesma chave nos blocos `pt` e `zh`.
 
 ## 🔐 Segurança
 
-- Autenticação por e-mail/senha via **Supabase Auth**.
-- **Row Level Security (RLS)**: cada usuária só enxerga e altera os produtos que
-  ela mesma cadastrou (`owner_id = auth.uid()`).
+- Autenticação por **usuário + senha** via **Supabase Auth** (o usuário é
+  convertido internamente em um e-mail sintético `usuario@shandian.local`).
+- **Row Level Security (RLS)**: apenas usuários **autenticados** acessam a tabela
+  `products`, e todos compartilham o mesmo estoque. O `owner_id` registra quem
+  cadastrou cada item (auditoria).
 - A `anon key` é pública por design — a proteção real é feita pelas políticas RLS.
 
 ## 🎨 Design
