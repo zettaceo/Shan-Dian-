@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: #0a0a0a;
+  color: #e5e7eb;
+}
+
+body {
+  font-feature-settings: "liga" 0;
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(60% 40% at 50% -10%, rgba(34, 197, 94, 0.06), transparent 60%),
+    linear-gradient(180deg, #0a0a0a 0%, #070707 100%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+/* Barra de rolagem discreta, estilo terminal */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f1f1f;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a2a;
+}
+
+/* Remove as setas dos inputs numericos */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Cursor piscante do "terminal" */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: "_";
+  color: #22c55e;
+  animation: blink 1s step-end infinite;
+}
+
+/* Container do scanner html5-qrcode: remove bordas feias padrao */
+#reader,
+#reader video {
+  border-radius: 8px !important;
+}
+#reader__scan_region {
+  background: transparent !important;
+}
+#reader__dashboard_section_csr button {
+  background: #22c55e !important;
+  color: #05140a !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-family: var(--font-mono), monospace !important;
+  padding: 6px 12px !important;
+}

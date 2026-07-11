@@ -1,0 +1,174 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+// ---------------------------------------------------------------------------
+//  Dicionario de traducoes — Portugues (pt) e Chines Simplificado (zh)
+// ---------------------------------------------------------------------------
+export const dictionary = {
+  pt: {
+    "lang.name": "PT",
+    "app.name": "SHAN DIAN",
+    "app.tagline": "闪电 · Cadastro Rapido de Produtos",
+
+    "auth.title": "ACESSO RESTRITO",
+    "auth.badge": "SUPABASE/AUTH",
+    "auth.subtitle": "Entre com seu e-mail e senha para gerenciar o estoque.",
+    "auth.email": "E-MAIL",
+    "auth.password": "SENHA",
+    "auth.signin": "ENTRAR",
+    "auth.signup": "CRIAR CONTA",
+    "auth.toggle_to_signup": "Nao tem conta? Cadastre-se",
+    "auth.toggle_to_signin": "Ja tem conta? Entrar",
+    "auth.signup_ok": "Conta criada! Verifique seu e-mail para confirmar (se exigido) e entre.",
+    "auth.loading": "PROCESSANDO...",
+
+    "header.logout": "SAIR",
+    "header.online": "ONLINE",
+
+    "scanner.title": "LEITOR DE CODIGO",
+    "scanner.badge": "CAMERA/SCAN",
+    "scanner.hint": "Aponte a camera para o codigo de barras do produto.",
+    "scanner.open": "ABRIR CAMERA",
+    "scanner.close": "FECHAR CAMERA",
+    "scanner.reading": "LENDO...",
+    "scanner.detected": "CODIGO DETECTADO",
+    "scanner.error": "Nao foi possivel acessar a camera. Verifique as permissoes.",
+
+    "form.title": "CADASTRO DE PRODUTO",
+    "form.badge": "SUPABASE/PRODUCTS",
+    "form.barcode": "CODIGO DE BARRAS",
+    "form.name": "NOME DO PRODUTO",
+    "form.description": "DESCRICAO",
+    "form.sale_price": "PRECO DE VENDA",
+    "form.cost_price": "PRECO DE CUSTO",
+    "form.stock": "QUANTIDADE EM ESTOQUE",
+    "form.save": "SALVAR PRODUTO",
+    "form.saving": "SALVANDO...",
+    "form.saved": "PRODUTO SALVO COM SUCESSO",
+    "form.required": "Preencha o codigo de barras e o nome do produto.",
+    "form.placeholder.barcode": "789xxxxxxxxxx",
+    "form.placeholder.name": "Ex.: Fone Bluetooth XZ-90",
+    "form.placeholder.description": "Detalhes, cor, modelo...",
+
+    "dash.title": "ULTIMOS CADASTROS",
+    "dash.badge": "LOG/PRODUCTS",
+    "dash.empty": "Nenhum produto cadastrado ainda.",
+    "dash.stock": "estoque",
+    "dash.loading": "CARREGANDO REGISTROS...",
+
+    "misc.currency": "R$",
+    "config.missing_title": "CONFIGURACAO PENDENTE",
+    "config.missing": "Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no arquivo .env.local.",
+  },
+
+  zh: {
+    "lang.name": "中文",
+    "app.name": "闪电",
+    "app.tagline": "SHAN DIAN · 快速产品登记",
+
+    "auth.title": "受限访问",
+    "auth.badge": "SUPABASE/AUTH",
+    "auth.subtitle": "请输入邮箱和密码以管理库存。",
+    "auth.email": "邮箱",
+    "auth.password": "密码",
+    "auth.signin": "登录",
+    "auth.signup": "注册",
+    "auth.toggle_to_signup": "还没有账户？立即注册",
+    "auth.toggle_to_signin": "已有账户？登录",
+    "auth.signup_ok": "账户已创建！如需确认请查收邮件，然后登录。",
+    "auth.loading": "处理中...",
+
+    "header.logout": "退出",
+    "header.online": "在线",
+
+    "scanner.title": "条码扫描器",
+    "scanner.badge": "CAMERA/SCAN",
+    "scanner.hint": "将摄像头对准产品条码。",
+    "scanner.open": "打开摄像头",
+    "scanner.close": "关闭摄像头",
+    "scanner.reading": "读取中...",
+    "scanner.detected": "已检测到条码",
+    "scanner.error": "无法访问摄像头，请检查权限。",
+
+    "form.title": "产品登记",
+    "form.badge": "SUPABASE/PRODUCTS",
+    "form.barcode": "条形码",
+    "form.name": "产品名称",
+    "form.description": "描述",
+    "form.sale_price": "销售价格",
+    "form.cost_price": "成本价格",
+    "form.stock": "库存数量",
+    "form.save": "保存产品",
+    "form.saving": "保存中...",
+    "form.saved": "产品保存成功",
+    "form.required": "请填写条形码和产品名称。",
+    "form.placeholder.barcode": "789xxxxxxxxxx",
+    "form.placeholder.name": "例如：蓝牙耳机 XZ-90",
+    "form.placeholder.description": "细节、颜色、型号...",
+
+    "dash.title": "最近登记",
+    "dash.badge": "LOG/PRODUCTS",
+    "dash.empty": "尚未登记任何产品。",
+    "dash.stock": "库存",
+    "dash.loading": "正在加载记录...",
+
+    "misc.currency": "¥",
+    "config.missing_title": "配置待完成",
+    "config.missing": "请在 .env.local 中设置 NEXT_PUBLIC_SUPABASE_URL 和 NEXT_PUBLIC_SUPABASE_ANON_KEY。",
+  },
+} as const;
+
+export type Lang = keyof typeof dictionary;
+export type TranslationKey = keyof (typeof dictionary)["pt"];
+
+type I18nContextValue = {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  toggle: () => void;
+  t: (key: TranslationKey) => string;
+};
+
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+const STORAGE_KEY = "shan-dian-lang";
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("pt");
+
+  // Restaura o idioma salvo no navegador.
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY) as Lang | null;
+    if (saved === "pt" || saved === "zh") setLangState(saved);
+  }, []);
+
+  const setLang = (next: Lang) => {
+    setLangState(next);
+    window.localStorage.setItem(STORAGE_KEY, next);
+  };
+
+  const value = useMemo<I18nContextValue>(
+    () => ({
+      lang,
+      setLang,
+      toggle: () => setLang(lang === "pt" ? "zh" : "pt"),
+      t: (key) => dictionary[lang][key] ?? key,
+    }),
+    [lang]
+  );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error("useI18n deve ser usado dentro de <I18nProvider>");
+  return ctx;
+}
