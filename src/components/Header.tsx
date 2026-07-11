@@ -3,19 +3,12 @@
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 
-/** Raio estilizado (logo do Shan Dian / 闪电 = "relampago"). */
+/** Marca do Shan Dian (闪店) — bode neon com circuitos. */
 function BoltLogo() {
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-panel-2 shadow-neon">
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-        <path
-          d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"
-          fill="#22c55e"
-          stroke="#22c55e"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-      </svg>
+    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-md border border-line bg-black shadow-neon">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/mark.png" alt="Shan Dian" className="h-full w-full object-cover" />
     </div>
   );
 }
